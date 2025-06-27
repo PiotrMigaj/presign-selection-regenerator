@@ -46,16 +46,21 @@ const BATCH_SIZE = 25;
 /**
  * Generate presigned URL for S3 object using long-term credentials
  * @param {string} objectKey - S3 object key
+ * @param {string} imageName - Image name
  * @returns {Promise<string>} - Presigned URL
  */
-async function generatePresignedUrl(objectKey) {
+async function generatePresignedUrl(objectKey, imageName) {
   if (!objectKey) {
     throw new Error("Object key is required");
   }
 
+  // Use imageName for filename if available, fallback to objectKey
+  const filename = imageName || objectKey;
+
   const command = new GetObjectCommand({
     Bucket: S3_BUCKET_NAME,
     Key: objectKey,
+    ResponseContentDisposition: `attachment; filename=\"${filename}\"`, // Force download
   });
 
   try {
@@ -100,7 +105,7 @@ async function updateItemPresignedUrls(item) {
     // For SelectionItem, use objectKey for S3 and update presignedUrl
     if (item.objectKey) {
       try {
-        const presignedUrl = await generatePresignedUrl(item.objectKey);
+        const presignedUrl = await generatePresignedUrl(item.objectKey, item.imageName);
         updates.presignedUrl = presignedUrl;
         updateExpressions.push("#purl = :purl");
         expressionAttributeNames["#purl"] = "presignedUrl";
