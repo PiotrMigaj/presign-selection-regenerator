@@ -71,11 +71,15 @@ async function generatePresignedUrl(objectKey) {
 
 // Rest of your code remains the same...
 function determinePrimaryKey(item) {
-  // For SelectionItem, imageName is the partition key
+  // Prefer composite key if both are present
+  if (item.imageName && item.selectionId) {
+    return { imageName: item.imageName, selectionId: item.selectionId };
+  }
+  // Fallback to just imageName
   if (item.imageName) {
     return { imageName: item.imageName };
   }
-  // Fallbacks for legacy or incomplete data
+  // Fallback to just selectionId
   if (item.selectionId) {
     return { selectionId: item.selectionId };
   }
