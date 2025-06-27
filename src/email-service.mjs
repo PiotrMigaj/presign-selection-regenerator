@@ -340,9 +340,17 @@ export async function sendJobSummaryEmail(jobSummary) {
     return;
   }
 
-  // Improved subject line to avoid spam triggers
-  const statusText = jobSummary.status === 'success' ? 'Completed Successfully' : 'Failed';
+  // If there were any errors, set status to 'failed' for subject and badge
+  let status = jobSummary.status;
+  if (jobSummary.errorCount && jobSummary.errorCount > 0) {
+    status = 'failed';
+  }
+
+  const statusText = status === 'success' ? 'Completed Successfully' : 'Failed';
   const subject = `[AWS Lambda] Presigned URL Regeneration ${statusText} - ${jobSummary.processedCount} items`;
+
+  // Pass the possibly updated status to the templates
+  const summaryWithStatus = { ...jobSummary, status };
 
   const emailParams = {
     Source: fromEmail,
@@ -356,11 +364,11 @@ export async function sendJobSummaryEmail(jobSummary) {
       },
       Body: {
         Html: {
-          Data: generateEmailHTML(jobSummary),
+          Data: generateEmailHTML(summaryWithStatus),
           Charset: 'UTF-8'
         },
         Text: {
-          Data: generateEmailText(jobSummary),
+          Data: generateEmailText(summaryWithStatus),
           Charset: 'UTF-8'
         }
       }
