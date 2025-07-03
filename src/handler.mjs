@@ -54,8 +54,15 @@ async function generatePresignedUrl(objectKey, imageName) {
     throw new Error("Object key is required");
   }
 
-  // Use imageName for filename if available, fallback to objectKey
-  const filename = imageName || objectKey;
+  // Extract extension from objectKey
+  const extMatch = objectKey.match(/\.([a-zA-Z0-9]+)$/);
+  const extension = extMatch ? extMatch[0] : '';
+
+  // If imageName is missing or does not end with the extension, append it
+  let filename = imageName || objectKey;
+  if (extension && (!filename.endsWith(extension))) {
+    filename += extension;
+  }
 
   const command = new GetObjectCommand({
     Bucket: S3_BUCKET_NAME,
